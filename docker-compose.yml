@@ -2,45 +2,50 @@ services:
   mediawiki:
     # https://hub.docker.com/_/mediawiki
     image: mediawiki:1.44.0
-    container_name: mediawiki
+    container_name: ${CONTAINER_NAME:?}
     restart: unless-stopped
-    # environment:
-    #   MEDIAWIKI_SITE_NAME: TestWiki
-    #   MEDIAWIKI_DB_HOST: mediawiki-db
-    #   MEDIAWIKI_DB_TYPE: ${DB_TYPE:?}
-    #   MEDIAWIKI_DB_NAME: ${DB_NAME:?}
-    #   MEDIAWIKI_DB_USER: ${DB_USER:?}
-    #   MEDIAWIKI_DB_PASSWORD: ${DB_PASSWD:?}
+    environment:
+      MEDIAWIKI_DB_HOST: db
+      MEDIAWIKI_DB_TYPE: ${DB_TYPE:?}
+      MEDIAWIKI_DB_NAME: ${DB_NAME:?}
+      MEDIAWIKI_DB_USER: ${DB_USER:?}
+      MEDIAWIKI_DB_PASSWORD: ${DB_PASSWD:?}
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.${CONTAINER_NAME:?}.entrypoints=https
+      - traefik.http.routers.${CONTAINER_NAME:?}.rule=Host(`${SUBDOMAIN:?}.${TRAEFIK_DOMAIN:?}`)
+      - traefik.http.routers.${CONTAINER_NAME:?}.tls=true
+      - traefik.http.routers.${CONTAINER_NAME:?}.tls.certresolver=cloudflare
+      - traefik.http.services.${CONTAINER_NAME:?}.loadbalancer.server.port=80
     networks:
       - mediawiki
+      - traefik
     ports:
       - 8080:80
     volumes:
-      - ./images:/var/www/html/images
-      - db:/var/www/data
+      - ${IMAGES_DIR}:/var/www/html/images
+      # Comment out LocalSettings.php on the first time run
       - ./LocalSettings.php:/var/www/html/LocalSettings.php
-    # depends_on:
-    #   - db
+    depends_on:
+      - db
   
-#   db:
-#     # https://hub.docker.com/r/bitnami/mariadb
-#     image: bitnami/mariadb:11.8.2
-#     container_name: mediawiki-db
-#     restart: unless-stopped
-#     environment:
-#       MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWD:?}
-#       MARIADB_USER: ${DB_USER:?}
-#       MARIADB_PASSWORD: ${DB_PASSWD:?}
-#       MARIADB_DATABASE: ${DB_NAME:?}
-#     networks:
-#       - mediawiki
-#     volumes:
-#       - db:/var/lib/mysql
+  db:
+    # Official MariaDB image (lighter than Bitnami, standard paths)
+    image: mariadb:11.4
+    container_name: ${CONTAINER_NAME:?}-db
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${DB_NAME:?}
+      MARIADB_USER: ${DB_USER:?}
+      MARIADB_PASSWORD: ${DB_PASSWD:?}
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - ${DB_DIR}:/var/lib/mysql
+    networks:
+      - mediawiki
 
 networks:
-   mediawiki:
-    name: mediawiki
-
-volumes:
-  db:
-    name: mediawiki-db
+  mediawiki:
+    name: ${CONTAINER_NAME:?}
+  traefik:
+    external: true
