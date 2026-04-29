@@ -1,8 +1,12 @@
 services:
-  mediawiki:
+  REDACTED_DB_NAME:
     # https://hub.docker.com/_/mediawiki
     image: mediawiki:1.44.0
+<<<<<<< Updated upstream
     container_name: ${CONTAINER_NAME:?}
+=======
+    container_name: REDACTED_DB_NAME
+>>>>>>> Stashed changes
     restart: unless-stopped
     environment:
       MEDIAWIKI_DB_HOST: db
@@ -12,17 +16,30 @@ services:
       MEDIAWIKI_DB_PASSWORD: ${DB_PASSWD:?}
     labels:
       - traefik.enable=true
+<<<<<<< Updated upstream
       - traefik.http.services.${CONTAINER_NAME:?}.loadbalancer.server.port=80
       - traefik.http.routers.${CONTAINER_NAME:?}.rule=Host(`${SUBDOMAIN:?}.${TRAEFIK_DOMAIN:?}`)
       - traefik.http.routers.${CONTAINER_NAME:?}.entrypoints=websecure
     networks:
       - mediawiki
+=======
+      - traefik.http.routers.REDACTED_DB_NAME.entrypoints=https
+      - traefik.http.routers.REDACTED_DB_NAME.rule=Host(`motak.${TRAEFIK_DOMAIN:?}`)
+      - traefik.http.routers.REDACTED_DB_NAME.tls=true
+      - traefik.http.routers.REDACTED_DB_NAME.tls.certresolver=cloudflare
+      - traefik.http.services.REDACTED_DB_NAME.loadbalancer.server.port=80
+    networks:
+      - REDACTED_DB_NAME
+>>>>>>> Stashed changes
       - traefik
     ports:
       - 8081:80
     volumes:
       - ${IMAGES_DIR}:/var/www/html/images
+<<<<<<< Updated upstream
       # Comment out LocalSettings.php on the first time run
+=======
+>>>>>>> Stashed changes
       - ./LocalSettings.php:/var/www/html/LocalSettings.php
     depends_on:
       - db
@@ -30,7 +47,11 @@ services:
   db:
     # Official MariaDB image (lighter than Bitnami, standard paths)
     image: mariadb:11.4
+<<<<<<< Updated upstream
     container_name: ${CONTAINER_NAME:?}-db
+=======
+    container_name: REDACTED_DB_NAME-db
+>>>>>>> Stashed changes
     restart: unless-stopped
     environment:
       MARIADB_DATABASE: ${DB_NAME:?}
@@ -40,10 +61,18 @@ services:
     volumes:
       - ${DB_DIR}:/var/lib/mysql
     networks:
+<<<<<<< Updated upstream
       - mediawiki
 
 networks:
   mediawiki:
     name: ${CONTAINER_NAME:?}
+=======
+      - REDACTED_DB_NAME
+
+networks:
+  REDACTED_DB_NAME:
+    name: REDACTED_DB_NAME
+>>>>>>> Stashed changes
   traefik:
     external: true
